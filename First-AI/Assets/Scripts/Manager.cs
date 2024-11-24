@@ -1,114 +1,154 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 
-// Klasse Manager, die MonoBehaviour erbt und für das Management des Trainingsprozesses zuständig ist
 public class Manager : MonoBehaviour
 {
-    public GameObject agentPrefab; // Referenz zum Agenten-Prefab
-    public GameObject target; // Referenz zum Ziel-Objekt
+    public GameObject agentPrefab;
+    public GameObject target; 
 
-    private bool isTraning = false; // Flag, das angibt, ob das Training läuft
-    public int populationSize; // Größe der Population (Anzahl der Agenten)
-    private int generationNumber = 0; // Zähler für die Anzahl der Generationen
-    private int[] layers = new int[] { 1, 10, 10, 1 }; // Array für die Layer-Struktur des neuronalen Netzwerks
-    private List<NeuralNetwork> nets; // Liste für die NeuralNetwork-Objekte
-    private bool leftMouseDown = false; // Flag, das angibt, ob die linke Maustaste gedrückt ist
-    private List<Agent> agentList = null; // Liste der Agenten
+    private bool isTraning = false; 
+    public int populationSize;
+    private int generationNumber = 0;
+    private int[] layers = new int[] { 1, 10, 10, 1 };
+    private List<NeuralNetwork> nets; 
+    private bool leftMouseDown = false; 
+    private List<Agent> agentList = null; 
 
-    // Timer-Methode, die isTraning auf false setzt
     void Timer()
     {
-        isTraning = false; // Setzt das Training-Flag zurück
+        isTraning = false; 
     }
 
-    // Update-Methode, die in jedem Frame aufgerufen wird
     void Update()
     {
-        if (isTraning == false) // Überprüft, ob das Training nicht läuft
+        if (isTraning == false)
         {
-            if (generationNumber == 0) // Überprüft, ob es die erste Generation ist
+            if (generationNumber == 0) 
             {
-                InitAgentNeuralNetworks(); // Initialisiert die Neural Networks der Agenten
+                InitAgentNeuralNetworks();
             }
-            else // Wenn es nicht die erste Generation ist
+            else 
             {
-                Debug.Log("Gespeichert"); // Gibt eine Debug-Nachricht aus
+                nets.Sort();
 
-                nets.Sort(); // Sortiert die Neural Networks basierend auf der Fitness
-                for (int i = 0; i < populationSize / 2; i++) // Iteriert über die Hälfte der Population
+                SaveNeuralNetworksToFile();
+
+                for (int i = 0; i < populationSize / 2; i++)
                 {
-                    nets[i] = new NeuralNetwork(nets[i + (populationSize / 2)]); // Kopiert das zweite Netz in die erste Hälfte
-                    nets[i].Mutate(); // Mutiert das kopierte Netzwerk
+                    nets[i] = new NeuralNetwork(nets[i + (populationSize / 2)]);
+                    nets[i].Mutate(); 
 
-                    nets[i + (populationSize / 2)] = new NeuralNetwork(nets[i + (populationSize / 2)]); // Kopiert das zweite Netz unverändert
+                    nets[i + (populationSize / 2)] = new NeuralNetwork(nets[i + (populationSize / 2)]);
                 }
 
-                for (int i = 0; i < populationSize; i++) // Iteriert über die gesamte Population
+                for (int i = 0; i < populationSize; i++)
                 {
-                    nets[i].SetFitness(0f); // Setzt die Fitness für jedes Netzwerk auf 0
+                    nets[i].SetFitness(0f);
                 }
             }
 
-            generationNumber++; // Erhöht die Generationsnummer um 1
+            generationNumber++; 
 
-            isTraning = true; // Setzt das Training-Flag auf true
-            Invoke("Timer", 15f); // Ruft die Timer-Methode nach 15 Sekunden auf
-            CreateAgentBodies(); // Erstellt die Agenten-Objekte
+            isTraning = true; 
+            Invoke("Timer", 15f); 
+            CreateAgentBodies(); 
         }
 
-        if (Input.GetMouseButtonDown(0)) // Überprüft, ob die linke Maustaste gedrückt wurde
+        if (Input.GetMouseButtonDown(0)) 
         {
-            leftMouseDown = true; // Setzt das Flag auf true
+            leftMouseDown = true; 
         }
-        else if (Input.GetMouseButtonUp(0)) // Überprüft, ob die linke Maustaste losgelassen wurde
+        else if (Input.GetMouseButtonUp(0))
         {
-            leftMouseDown = false; // Setzt das Flag auf false
+            leftMouseDown = false;
         }
 
-        if (leftMouseDown == true) // Überprüft, ob die linke Maustaste gedrückt ist
+        if (leftMouseDown == true) 
         {
-            Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition); // Konvertiert die Mausposition in Weltkoordinaten
-            target.transform.position = mousePosition; // Setzt die Position des Ziel-Objekts auf die Mausposition
+            Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition); 
+            target.transform.position = mousePosition; 
         }
     }
 
-    // Methode zur Erstellung der Agenten-Objekte
     private void CreateAgentBodies()
     {
-        if (agentList != null) // Überprüft, ob die Agenten-Liste nicht null ist
+        if (agentList != null) 
         {
-            for (int i = 0; i < agentList.Count; i++) // Iteriert über die vorhandenen Agenten
+            for (int i = 0; i < agentList.Count; i++)
             {
-                GameObject.Destroy(agentList[i].gameObject); // Zerstört das Agenten-Objekt
+                GameObject.Destroy(agentList[i].gameObject); 
             }
         }
 
-        agentList = new List<Agent>(); // Erstellt eine neue Liste für Agenten
+        agentList = new List<Agent>(); 
 
-        for (int i = 0; i < populationSize; i++) // Iteriert über die gesamte Population
+        for (int i = 0; i < populationSize; i++)
         {
-            Agent agnet = ((GameObject)Instantiate(agentPrefab, new Vector3(UnityEngine.Random.Range(-10f, 10f), UnityEngine.Random.Range(-10f, 10f), 0), agentPrefab.transform.rotation)).GetComponent<Agent>(); // Erstellt einen neuen Agenten mit zufälliger Position
-            agnet.Init(nets[i], target.transform); // Initialisiert den Agenten mit dem zugehörigen NeuralNetwork und Ziel
-            agentList.Add(agnet); // Fügt den Agenten zur Agenten-Liste hinzu
+            Agent agnet = ((GameObject)Instantiate(agentPrefab, new Vector3(UnityEngine.Random.Range(-2f, 2f), UnityEngine.Random.Range(-2f, 2f), 0), agentPrefab.transform.rotation)).GetComponent<Agent>();
+            agnet.Init(nets[i], target.transform); 
+            agentList.Add(agnet);
         }
     }
 
-    // Methode zur Initialisierung der Neural Networks der Agenten
     void InitAgentNeuralNetworks()
     {
-        if (populationSize % 2 != 0) // Überprüft, ob die Population ungerade ist
+        if (populationSize % 2 != 0)
         {
-            populationSize = 20; // Setzt die Population auf 20, wenn sie ungerade ist
+            populationSize = 20; 
         }
 
-        nets = new List<NeuralNetwork>(); // Erstellt eine neue Liste für die Neural Networks
+        nets = new List<NeuralNetwork>(); 
 
-        for (int i = 0; i < populationSize; i++) // Iteriert über die gesamte Population
+        for (int i = 0; i < populationSize; i++) 
         {
-            NeuralNetwork net = new NeuralNetwork(layers); // Erstellt ein neues NeuralNetwork mit der angegebenen Layer-Struktur
-            net.Mutate(); // Mutiert das Netzwerk
-            nets.Add(net); // Fügt das Netzwerk zur Liste hinzu
+            NeuralNetwork net = new NeuralNetwork(layers); 
+            net.Mutate(); 
+            nets.Add(net);
+        }
+    }
+
+    private void SaveNeuralNetworksToFile()
+    {
+        NeuralNetwork bestNetwork = null;
+        float bestFitness = float.MinValue;
+
+        foreach (var net in nets)
+        {
+            if (net.GetFitness() > bestFitness)
+            {
+                bestFitness = net.GetFitness();
+                bestNetwork = net;
+            }
+        }
+
+        if (bestNetwork != null)
+        {
+            string filePath = Path.Combine(Application.persistentDataPath, "bestNeuralNetwork.txt");
+
+            List<string> neuralNetworkData = new List<string>();
+
+            string networkString = "Fitness: " + bestNetwork.GetFitness() + "\n";
+
+            for (int i = 0; i < bestNetwork.GetWeights().Length; i++)
+            {
+                networkString += $"Layer {i + 1} weights:\n";
+
+                for (int j = 0; j < bestNetwork.GetWeights()[i].Length; j++)
+                {
+                    networkString += $"Neuron {j + 1}: " + string.Join(", ", bestNetwork.GetWeights()[i][j]) + "\n";
+                }
+            }
+
+            neuralNetworkData.Add(networkString);
+
+            File.WriteAllLines(filePath, neuralNetworkData);
+            Debug.Log("Best neural network saved to " + filePath);
+        }
+        else
+        {
+            Debug.LogError("No networks available to save.");
         }
     }
 }
