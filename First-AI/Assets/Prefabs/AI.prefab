@@ -13,9 +13,9 @@ GameObject:
   - component: {fileID: 5260210550669259656}
   - component: {fileID: 2381468784190592926}
   - component: {fileID: -8690505486915938553}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: AI
-  m_TagString: Untagged
+  m_TagString: Agent
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -99,10 +99,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2f2824be597290748a8a5fa88c2a2608, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  numberOfRays: 1
-  rayDistance: 2
-  avoidanceStrength: 5
-  collided: 0
 --- !u!50 &2381468784190592926
 Rigidbody2D:
   serializedVersion: 4

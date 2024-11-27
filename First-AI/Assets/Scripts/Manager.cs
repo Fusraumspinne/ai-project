@@ -11,7 +11,7 @@ public class Manager : MonoBehaviour
     private bool isTraning = false; 
     public int populationSize;
     private int generationNumber = 0;
-    private int[] layers = new int[] { 1, 10, 10, 1 };
+    private int[] layers = new int[] { 6, 20, 20, 1 };
     private List<NeuralNetwork> nets; 
     private bool leftMouseDown = false; 
     private List<Agent> agentList = null; 
@@ -74,11 +74,12 @@ public class Manager : MonoBehaviour
 
     private void CreateAgentBodies()
     {
-        if (agentList != null) 
+        if (agentList != null)
         {
             for (int i = 0; i < agentList.Count; i++)
             {
-                GameObject.Destroy(agentList[i].gameObject); 
+                if (agentList[i] != null)
+                    Destroy(agentList[i].gameObject);
             }
         }
 

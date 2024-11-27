@@ -17,30 +17,44 @@ public class MovePlayer : MonoBehaviour
     private float timeToChangeDirection;
     private Vector2 direction;
 
+    public bool autoMove;
+
     void Start()
     {
         direction = GetRandomDirection();
-
         timeToChangeDirection = GetRandomTime();
     }
 
     void Update()
     {
-        transform.Translate(direction * speed * Time.deltaTime);
-
-        timeToChangeDirection -= Time.deltaTime;
-        if (timeToChangeDirection <= 0)
+        if (autoMove)
         {
-            direction = GetRandomDirection();
-            timeToChangeDirection = GetRandomTime();
-        }
+            // Bewegt den Spieler in der aktuellen Richtung
+            transform.Translate(direction * speed * Time.deltaTime, Space.World);
 
-        CheckBoundsAndChangeDirection();
+            // Zählt die Zeit für die Richtungsänderung herunter
+            timeToChangeDirection -= Time.deltaTime;
+            if (timeToChangeDirection <= 0)
+            {
+                direction = GetRandomDirection();
+                timeToChangeDirection = GetRandomTime();
+            }
+
+            // Prüft auf Kollision mit den Begrenzungen
+            CheckBoundsAndClamp();
+        }
     }
 
     Vector2 GetRandomDirection()
     {
-        return new Vector2(Random.Range(-1f, 1f), Random.Range(-1f, 1f)).normalized;
+        // Generiert eine zufällige Richtung und stellt sicher, dass sie nicht null ist
+        Vector2 randomDirection;
+        do
+        {
+            randomDirection = new Vector2(Random.Range(-1f, 1f), Random.Range(-1f, 1f)).normalized;
+        } while (randomDirection == Vector2.zero);
+
+        return randomDirection;
     }
 
     float GetRandomTime()
@@ -48,18 +62,33 @@ public class MovePlayer : MonoBehaviour
         return Random.Range(randomTimeMin, randomTimeMax);
     }
 
-    void CheckBoundsAndChangeDirection()
+    void CheckBoundsAndClamp()
     {
         Vector3 position = transform.position;
 
-        if (position.x < xMin || position.x > xMax)
+        // Überprüft, ob der Spieler die Begrenzung erreicht hat
+        if (position.x < xMin)
         {
-            direction.x *= -1;
+            position.x = xMin;
+            direction.x = Mathf.Abs(direction.x); // Bewegt sich nach rechts
+        }
+        else if (position.x > xMax)
+        {
+            position.x = xMax;
+            direction.x = -Mathf.Abs(direction.x); // Bewegt sich nach links
         }
 
-        if (position.y < yMin || position.y > yMax)
+        if (position.y < yMin)
         {
-            direction.y *= -1;
+            position.y = yMin;
+            direction.y = Mathf.Abs(direction.y); // Bewegt sich nach oben
         }
+        else if (position.y > yMax)
+        {
+            position.y = yMax;
+            direction.y = -Mathf.Abs(direction.y); // Bewegt sich nach unten
+        }
+
+        transform.position = position; // Aktualisiert die Position, um sicherzustellen, dass sie im Bereich bleibt
     }
 }
