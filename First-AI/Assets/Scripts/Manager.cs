@@ -1,44 +1,46 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using UnityEngine.Playables;
 
 public class Manager : MonoBehaviour
 {
     public GameObject agentPrefab;
-    public GameObject target; 
+    public GameObject target;
 
-    private bool isTraning = false; 
+    private bool isTraning = false;
     public int populationSize;
     private int generationNumber = 0;
     private int[] layers = new int[] { 6, 20, 20, 1 };
-    private List<NeuralNetwork> nets; 
-    private bool leftMouseDown = false; 
-    private List<Agent> agentList = null; 
+    private List<NeuralNetwork> nets;
+    private bool leftMouseDown = false;
+    private List<Agent> agentList = null;
 
     void Timer()
     {
-        isTraning = false; 
+        isTraning = false;
     }
 
     void Update()
     {
         if (isTraning == false)
         {
-            if (generationNumber == 0) 
+            if (generationNumber == 0)
             {
                 InitAgentNeuralNetworks();
             }
-            else 
+            else
             {
                 nets.Sort();
 
-                SaveNeuralNetworksToFile();
+                Save();
 
                 for (int i = 0; i < populationSize / 2; i++)
                 {
                     nets[i] = new NeuralNetwork(nets[i + (populationSize / 2)]);
-                    nets[i].Mutate(); 
+                    nets[i].Mutate();
 
                     nets[i + (populationSize / 2)] = new NeuralNetwork(nets[i + (populationSize / 2)]);
                 }
@@ -49,26 +51,26 @@ public class Manager : MonoBehaviour
                 }
             }
 
-            generationNumber++; 
+            generationNumber++;
 
-            isTraning = true; 
-            Invoke("Timer", 15f); 
-            CreateAgentBodies(); 
+            isTraning = true;
+            Invoke("Timer", 15f);
+            CreateAgentBodies();
         }
 
-        if (Input.GetMouseButtonDown(0)) 
+        if (Input.GetMouseButtonDown(0))
         {
-            leftMouseDown = true; 
+            leftMouseDown = true;
         }
         else if (Input.GetMouseButtonUp(0))
         {
             leftMouseDown = false;
         }
 
-        if (leftMouseDown == true) 
+        if (leftMouseDown == true)
         {
-            Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition); 
-            target.transform.position = mousePosition; 
+            Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            target.transform.position = mousePosition;
         }
     }
 
@@ -83,12 +85,12 @@ public class Manager : MonoBehaviour
             }
         }
 
-        agentList = new List<Agent>(); 
+        agentList = new List<Agent>();
 
         for (int i = 0; i < populationSize; i++)
         {
             Agent agnet = ((GameObject)Instantiate(agentPrefab, new Vector3(UnityEngine.Random.Range(-2f, 2f), UnityEngine.Random.Range(-2f, 2f), 0), agentPrefab.transform.rotation)).GetComponent<Agent>();
-            agnet.Init(nets[i], target.transform); 
+            agnet.Init(nets[i], target.transform);
             agentList.Add(agnet);
         }
     }
@@ -97,20 +99,20 @@ public class Manager : MonoBehaviour
     {
         if (populationSize % 2 != 0)
         {
-            populationSize = 20; 
+            populationSize = 20;
         }
 
-        nets = new List<NeuralNetwork>(); 
+        nets = new List<NeuralNetwork>();
 
-        for (int i = 0; i < populationSize; i++) 
+        for (int i = 0; i < populationSize; i++)
         {
-            NeuralNetwork net = new NeuralNetwork(layers); 
-            net.Mutate(); 
+            NeuralNetwork net = new NeuralNetwork(layers);
+            net.Mutate();
             nets.Add(net);
         }
     }
 
-    private void SaveNeuralNetworksToFile()
+    private void Save()
     {
         NeuralNetwork bestNetwork = null;
         float bestFitness = float.MinValue;
@@ -126,30 +128,53 @@ public class Manager : MonoBehaviour
 
         if (bestNetwork != null)
         {
-            string filePath = Path.Combine(Application.persistentDataPath, "bestNeuralNetwork.txt");
+            SavedNetwork savedNetwork = new SavedNetwork();
+            savedNetwork.fitness = bestFitness;
 
-            List<string> neuralNetworkData = new List<string>();
-
-            string networkString = "Fitness: " + bestNetwork.GetFitness() + "\n";
+            List<LayerWeightsArray> layerArrays = new List<LayerWeightsArray>();
 
             for (int i = 0; i < bestNetwork.GetWeights().Length; i++)
             {
-                networkString += $"Layer {i + 1} weights:\n";
+                LayerWeightsArray layerArray = new LayerWeightsArray();
+                List<WeightsArray> weightsArrays = new List<WeightsArray>();
 
                 for (int j = 0; j < bestNetwork.GetWeights()[i].Length; j++)
                 {
-                    networkString += $"Neuron {j + 1}: " + string.Join(", ", bestNetwork.GetWeights()[i][j]) + "\n";
+                    WeightsArray weightsArray = new WeightsArray();
+                    weightsArray.weights = bestNetwork.GetWeights()[i][j]; 
+
+                    weightsArrays.Add(weightsArray);
                 }
+
+                layerArray.weightsArrays = weightsArrays.ToArray();
+                layerArrays.Add(layerArray);
             }
 
-            neuralNetworkData.Add(networkString);
+            savedNetwork.layerArrays = layerArrays.ToArray();
 
-            File.WriteAllLines(filePath, neuralNetworkData);
-            Debug.Log("Best neural network saved to " + filePath);
-        }
-        else
-        {
-            Debug.LogError("No networks available to save.");
+            string json = JsonUtility.ToJson(savedNetwork, true);
+            string filePath = Path.Combine(Application.persistentDataPath, "bestNeuralNetwork.json");
+            File.WriteAllText(filePath, json);
         }
     }
+
+}
+
+[System.Serializable]
+public class SavedNetwork
+{
+    public float fitness;
+    public LayerWeightsArray[] layerArrays;
+}
+
+[System.Serializable]
+public class WeightsArray
+{
+    public float[] weights; 
+}
+
+[System.Serializable]
+public class LayerWeightsArray
+{
+    public WeightsArray[] weightsArrays;
 }
