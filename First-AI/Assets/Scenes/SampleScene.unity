@@ -165,7 +165,7 @@ MonoBehaviour:
   schwer: {fileID: 1106827508}
   agentPrefab: {fileID: 5272040140898422965, guid: ada85ddd0dc8a0044af6f8d47da1363f, type: 3}
   target: {fileID: 1272205141}
-  populationSize: 250
+  populationSize: 100
 --- !u!4 &15023656
 Transform:
   m_ObjectHideFlags: 0
@@ -12463,7 +12463,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1106827509
 Transform:
   m_ObjectHideFlags: 0
@@ -14216,14 +14216,14 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 15023654}
-        m_TargetAssemblyTypeName: 
-        m_MethodName: 
-        m_Mode: 1
+      - m_Target: {fileID: 15023655}
+        m_TargetAssemblyTypeName: Manager, Assembly-CSharp
+        m_MethodName: StartTraining
+        m_Mode: 3
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: 
-          m_IntArgument: 0
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 1
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0
@@ -24587,7 +24587,7 @@ MonoBehaviour:
       - m_Target: {fileID: 15023655}
         m_TargetAssemblyTypeName: Manager, Assembly-CSharp
         m_MethodName: StartTraining
-        m_Mode: 1
+        m_Mode: 3
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine

@@ -15,6 +15,7 @@ public class Manager : MonoBehaviour
     [SerializeField] private GameObject schwer;
 
     private bool trainingStart;
+    private bool trainSavedAgents;
 
     public GameObject agentPrefab;
     public GameObject target;
@@ -67,7 +68,16 @@ public class Manager : MonoBehaviour
 
             isTraining = true;
             Invoke("Timer", 15f);
-            CreateAgentBodies();
+
+            if (trainSavedAgents) 
+            {
+                CreateAgentsFromSavedNetwork();
+                trainSavedAgents = false;
+            }
+            else
+            {
+                CreateAgentBodies();
+            }
         }
 
         if (Input.GetMouseButtonDown(0))
@@ -86,13 +96,66 @@ public class Manager : MonoBehaviour
         }
     }
 
-    public void StartTraining()
+    public void StartTraining(int state)
     {
         trainingStart = true;
+
+        if(state == 1)
+        {
+            trainSavedAgents = true;
+        }
 
         foreach(GameObject btn in buttons)
         {
             btn.SetActive(false);
+        }
+    }
+
+    private void CreateAgentsFromSavedNetwork()
+    {
+        string filePath = Path.Combine(Application.persistentDataPath, "bestNeuralNetwork.json");
+
+        if (!File.Exists(filePath))
+        {
+            return;
+        }
+
+        string json = File.ReadAllText(filePath);
+        SavedNetwork savedNetwork = JsonUtility.FromJson<SavedNetwork>(json);
+
+        int[] layers = { 6, 20, 20, 1 };
+        NeuralNetwork reconstructedNetwork = new NeuralNetwork(layers);
+
+        float[][][] weights = new float[savedNetwork.layerArrays.Length][][];
+
+        for (int i = 0; i < savedNetwork.layerArrays.Length; i++)
+        {
+            weights[i] = new float[savedNetwork.layerArrays[i].weightsArrays.Length][];
+            for (int j = 0; j < savedNetwork.layerArrays[i].weightsArrays.Length; j++)
+            {
+                weights[i][j] = savedNetwork.layerArrays[i].weightsArrays[j].weights;
+            }
+        }
+
+        reconstructedNetwork.SetWeights(weights);
+
+        if (agentList != null)
+        {
+            for (int i = 0; i < agentList.Count; i++)
+            {
+                if (agentList[i] != null)
+                    Destroy(agentList[i].gameObject);
+            }
+        }
+
+        agentList = new List<Agent>();
+
+        for (int i = 0; i < populationSize; i++)
+        {
+            Agent agent = Instantiate(agentPrefab, new Vector3(UnityEngine.Random.Range(-2f, 2f), UnityEngine.Random.Range(-2f, 2f), 0), Quaternion.identity).GetComponent<Agent>();
+            agent.Init(reconstructedNetwork, target.transform);
+            agentList.Add(agent);
+            nets[i] = reconstructedNetwork;
         }
     }
 
