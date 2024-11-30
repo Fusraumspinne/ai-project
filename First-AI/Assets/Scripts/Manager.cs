@@ -4,13 +4,22 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using UnityEngine.Playables;
+using UnityEngine.UI;
 
 public class Manager : MonoBehaviour
 {
+    [SerializeField] private bool save;
+
+    [SerializeField] private GameObject[] buttons;
+    [SerializeField] private GameObject normal;
+    [SerializeField] private GameObject schwer;
+
+    private bool trainingStart;
+
     public GameObject agentPrefab;
     public GameObject target;
 
-    private bool isTraning = false;
+    private bool isTraining = false;
     public int populationSize;
     private int generationNumber = 0;
     private int[] layers = new int[] { 6, 20, 20, 1 };
@@ -20,12 +29,12 @@ public class Manager : MonoBehaviour
 
     void Timer()
     {
-        isTraning = false;
+        isTraining = false;
     }
 
     void Update()
     {
-        if (isTraning == false)
+        if (isTraining == false && trainingStart)
         {
             if (generationNumber == 0)
             {
@@ -35,7 +44,10 @@ public class Manager : MonoBehaviour
             {
                 nets.Sort();
 
-                Save();
+                if (save)
+                {
+                    Save();
+                }
 
                 for (int i = 0; i < populationSize / 2; i++)
                 {
@@ -53,7 +65,7 @@ public class Manager : MonoBehaviour
 
             generationNumber++;
 
-            isTraning = true;
+            isTraining = true;
             Invoke("Timer", 15f);
             CreateAgentBodies();
         }
@@ -71,6 +83,16 @@ public class Manager : MonoBehaviour
         {
             Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             target.transform.position = mousePosition;
+        }
+    }
+
+    public void StartTraining()
+    {
+        trainingStart = true;
+
+        foreach(GameObject btn in buttons)
+        {
+            btn.SetActive(false);
         }
     }
 
@@ -158,6 +180,94 @@ public class Manager : MonoBehaviour
         }
     }
 
+    public void LoadAgent()
+    {
+        string filePath = Path.Combine(Application.persistentDataPath, "bestNeuralNetwork.json");
+
+        if (!File.Exists(filePath))
+        {
+            return;
+        }
+
+        string json = File.ReadAllText(filePath);
+        SavedNetwork savedNetwork = JsonUtility.FromJson<SavedNetwork>(json);
+
+        int[] layers = { 6, 20, 20, 1 };
+        NeuralNetwork reconstructedNetwork = new NeuralNetwork(layers);
+
+        float[][][] weights = new float[savedNetwork.layerArrays.Length][][];
+
+        for (int i = 0; i < savedNetwork.layerArrays.Length; i++)
+        {
+            weights[i] = new float[savedNetwork.layerArrays[i].weightsArrays.Length][];
+            for (int j = 0; j < savedNetwork.layerArrays[i].weightsArrays.Length; j++)
+            {
+                weights[i][j] = savedNetwork.layerArrays[i].weightsArrays[j].weights;
+            }
+        }
+
+        reconstructedNetwork.SetWeights(weights);
+
+        Agent agent = Instantiate(agentPrefab, Vector3.zero, Quaternion.identity).GetComponent<Agent>();
+        agent.Init(reconstructedNetwork, target.transform);
+
+        foreach (GameObject btn in buttons)
+        {
+            btn.SetActive(false);
+        }
+    }
+
+    public void ChangeLevel(int level)
+    {
+        if(level == 1)
+        {
+            normal.SetActive(true);
+            schwer.SetActive(false);
+
+            buttons[3].GetComponent<Image>().color = Color.green;
+            buttons[4].GetComponent<Image>().color = Color.red;
+        }
+        else if(level == 2)
+        {
+            normal.SetActive(false);
+            schwer.SetActive(true);
+
+            buttons[3].GetComponent<Image>().color = Color.red;
+            buttons[4].GetComponent<Image>().color = Color.green;
+        }
+    }
+
+    public void AutoSave()
+    {
+        if (save)
+        {
+            save = false;
+
+            buttons[5].GetComponent<Image>().color = Color.red;
+        }
+        else
+        {
+            save = true;
+
+            buttons[5].GetComponent<Image>().color = Color.green;
+        }
+    }
+
+    public void AutoMove()
+    {
+        if (target.GetComponent<MovePlayer>().autoMove)
+        {
+            target.GetComponent<MovePlayer>().autoMove = false;
+
+            buttons[6].GetComponent<Image>().color = Color.red;
+        }
+        else
+        {
+            target.GetComponent<MovePlayer>().autoMove = true;
+
+            buttons[6].GetComponent<Image>().color = Color.green;
+        }
+    }
 }
 
 [System.Serializable]

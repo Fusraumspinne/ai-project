@@ -171,6 +171,11 @@ public class NeuralNetwork : IComparable<NeuralNetwork>
         return weights;
     }
 
+    public void SetWeights(float[][][] newWeights)
+    {
+        weights = newWeights;
+    }
+
     public int CompareTo(NeuralNetwork other)
     {
         if (other == null) return 1;

@@ -29,10 +29,8 @@ public class MovePlayer : MonoBehaviour
     {
         if (autoMove)
         {
-            // Bewegt den Spieler in der aktuellen Richtung
             transform.Translate(direction * speed * Time.deltaTime, Space.World);
 
-            // Zählt die Zeit für die Richtungsänderung herunter
             timeToChangeDirection -= Time.deltaTime;
             if (timeToChangeDirection <= 0)
             {
@@ -40,14 +38,12 @@ public class MovePlayer : MonoBehaviour
                 timeToChangeDirection = GetRandomTime();
             }
 
-            // Prüft auf Kollision mit den Begrenzungen
             CheckBoundsAndClamp();
         }
     }
 
     Vector2 GetRandomDirection()
     {
-        // Generiert eine zufällige Richtung und stellt sicher, dass sie nicht null ist
         Vector2 randomDirection;
         do
         {
@@ -66,29 +62,28 @@ public class MovePlayer : MonoBehaviour
     {
         Vector3 position = transform.position;
 
-        // Überprüft, ob der Spieler die Begrenzung erreicht hat
         if (position.x < xMin)
         {
             position.x = xMin;
-            direction.x = Mathf.Abs(direction.x); // Bewegt sich nach rechts
+            direction.x = Mathf.Abs(direction.x);
         }
         else if (position.x > xMax)
         {
             position.x = xMax;
-            direction.x = -Mathf.Abs(direction.x); // Bewegt sich nach links
+            direction.x = -Mathf.Abs(direction.x);
         }
 
         if (position.y < yMin)
         {
             position.y = yMin;
-            direction.y = Mathf.Abs(direction.y); // Bewegt sich nach oben
+            direction.y = Mathf.Abs(direction.y);
         }
         else if (position.y > yMax)
         {
             position.y = yMax;
-            direction.y = -Mathf.Abs(direction.y); // Bewegt sich nach unten
+            direction.y = -Mathf.Abs(direction.y);
         }
 
-        transform.position = position; // Aktualisiert die Position, um sicherzustellen, dass sie im Bereich bleibt
+        transform.position = position;
     }
 }
