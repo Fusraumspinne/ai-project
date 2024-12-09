@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.UI;
@@ -13,6 +14,8 @@ public class Manager : MonoBehaviour
     [SerializeField] private GameObject[] buttons;
     [SerializeField] private GameObject normal;
     [SerializeField] private GameObject schwer;
+    [SerializeField] private TMP_InputField populationInput;
+    [SerializeField] private TMP_Text genText;
 
     private bool trainingStart;
     private bool trainSavedAgents;
@@ -23,7 +26,7 @@ public class Manager : MonoBehaviour
     private bool isTraining = false;
     public int populationSize;
     private int generationNumber = 0;
-    private int[] layers = new int[] { 6, 20, 20, 1 };
+    private int[] layers = new int[] { 9, 20, 20, 2 };
     private List<NeuralNetwork> nets;
     private bool leftMouseDown = false;
     private List<Agent> agentList = null;
@@ -82,11 +85,14 @@ public class Manager : MonoBehaviour
 
         if (Input.GetMouseButtonDown(0))
         {
-            leftMouseDown = true;
-        }
-        else if (Input.GetMouseButtonUp(0))
-        {
-            leftMouseDown = false;
+            if (leftMouseDown)
+            {
+                leftMouseDown = false;
+            }
+            else
+            {
+                leftMouseDown = true;
+            }
         }
 
         if (leftMouseDown == true)
@@ -94,10 +100,13 @@ public class Manager : MonoBehaviour
             Vector2 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             target.transform.position = mousePosition;
         }
+
+        genText.text = "Generation: " + generationNumber.ToString();
     }
 
     public void StartTraining(int state)
     {
+        populationSize = Convert.ToInt32(populationInput.text);
         trainingStart = true;
 
         if(state == 1)
@@ -123,7 +132,7 @@ public class Manager : MonoBehaviour
         string json = File.ReadAllText(filePath);
         SavedNetwork savedNetwork = JsonUtility.FromJson<SavedNetwork>(json);
 
-        int[] layers = { 6, 20, 20, 1 };
+        int[] layers = { 9, 20, 20, 2 };
         NeuralNetwork reconstructedNetwork = new NeuralNetwork(layers);
 
         float[][][] weights = new float[savedNetwork.layerArrays.Length][][];
@@ -255,7 +264,7 @@ public class Manager : MonoBehaviour
         string json = File.ReadAllText(filePath);
         SavedNetwork savedNetwork = JsonUtility.FromJson<SavedNetwork>(json);
 
-        int[] layers = { 6, 20, 20, 1 };
+        int[] layers = { 9, 20, 20, 2 };
         NeuralNetwork reconstructedNetwork = new NeuralNetwork(layers);
 
         float[][][] weights = new float[savedNetwork.layerArrays.Length][][];

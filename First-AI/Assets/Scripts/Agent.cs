@@ -25,12 +25,13 @@ public class Agent : MonoBehaviour
         if (initilized == true)
         {
             float distance = Vector2.Distance(transform.position, target.position);
-            if (distance > 20f)
-                distance = 20f;
-            for (int i = 0; i < mats.Length; i++)
-                mats[i].color = new Color(distance / 20f, (1f - (distance / 20f)), (1f - (distance / 20f)));
+            //if (distance > 20f)
+            //    distance = 20f;
+            //for (int i = 0; i < mats.Length; i++)
+            //    mats[i].color = new Color(distance / 20f, (1f - (distance / 20f)), (1f - (distance / 20f)));
 
-            float[] inputs = new float[6];
+            float[] inputs = new float[9];
+            float speedMulti;
 
             float angle = transform.eulerAngles.z % 360f;
             if (angle < 0f)
@@ -66,17 +67,44 @@ public class Agent : MonoBehaviour
 
             inputs[0] = rad / Mathf.PI;
             inputs[1] = CastRay(transform.up);
-            inputs[2] = CastRay(Quaternion.Euler(0, 0, 25) * transform.up);
-            inputs[3] = CastRay(Quaternion.Euler(0, 0, -25) * transform.up);
-            inputs[4] = CastRay(Quaternion.Euler(0, 0, 50) * transform.up);
-            inputs[5] = CastRay(Quaternion.Euler(0, 0, -50) * transform.up);
+            inputs[2] = CastRay(Quaternion.Euler(0, 0, 20) * transform.up);
+            inputs[3] = CastRay(Quaternion.Euler(0, 0, -20) * transform.up);
+            inputs[4] = CastRay(Quaternion.Euler(0, 0, 35) * transform.up);
+            inputs[5] = CastRay(Quaternion.Euler(0, 0, -35) * transform.up);
+            inputs[6] = CastRay(Quaternion.Euler(0, 0, 50) * transform.up);
+            inputs[7] = CastRay(Quaternion.Euler(0, 0, -50) * transform.up);
+            inputs[8] = distance / 25f;
+            float calcDistance = distance / 25f;
 
             float[] output = net.FeedForward(inputs);
 
-            rBody.velocity = 2.5f * transform.up;
+            speedMulti = Mathf.Clamp(output[1], 0.5f, 2f);
+
+            rBody.velocity = 3.5f * transform.up * speedMulti;
             rBody.angularVelocity = 500f * output[0];
 
             net.AddFitness(1f - Mathf.Abs(inputs[0]));
+
+            if (calcDistance >= 0.04f && calcDistance < 0.06f)
+            {
+                net.AddFitness(1f);
+            }
+            else if (calcDistance >= 0.06f && calcDistance < 0.1f)
+            {
+                net.AddFitness(0.8f);
+            }
+            else if (calcDistance >= 0.1f && calcDistance < 0.15f)
+            {
+                net.AddFitness(0.6f);
+            }
+            else if (calcDistance >= 0.15f && calcDistance < 0.5f)
+            {
+                net.AddFitness(0.4f);
+            }
+            else if (calcDistance >= 0.5f && calcDistance < 1f)
+            {
+                net.AddFitness(0.2f);
+            }
         }
     }
 
@@ -107,7 +135,6 @@ public class Agent : MonoBehaviour
     {
         if (collision.CompareTag("Wall"))
         {
-            //net.AddFitness(-200f);
             Destroy(gameObject);
         }
     }
